@@ -2,15 +2,15 @@
 
 My implementation of the scull driver from Linux Device Drivers (Third Edition) by Corbett, Rubini, and Kroah-Hartman. Basically this is a 'practice' repo, as I'm going through the book to sharpen up my device driver skills.
 
-My intent at the moment, is to use a single repo and add to it as the driver becomes more complex, but I'll adjust the layout if needed.
-
 The book itself can be downloaded under the Creative Commons license at https://lwn.net/Kernel/LDD3/.
 
-This project will include code from the examples provided with the book, which can be be found at: https://resources.oreilly.com/examples/9780596005900/
+The code in this repo is my implementation/interpretation of the scull driver, and isn't intended as an exact copy of the example code provided by the authors. The authors example code can be found at https://resources.oreilly.com/examples/9780596005900/
+
+My intent at the moment is to use a single repo and add to it as the driver becomes more complex, but I'll adjust the layout if needed.
 
 ## License ##
 
-This project is licensed under the GPLv3
+This project is licensed under the GPLv3.
 
 ## Author ##
 
