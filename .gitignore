@@ -84,9 +84,3 @@ x509.genkey
 # Kconfig presets
 all.config
 
-#
-# Debian packaging: ignore everything at the top level, since it isn't
-# included in our repository
-#
-/*
-!/debian/
