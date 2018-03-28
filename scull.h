@@ -38,6 +38,20 @@
 /* Includes */
 #include <linux/fs.h>
 
+/* Public datatypes */
+struct scull_qset {
+	void **data;
+	struct scull_qset *next;
+};
+struct scull_dev {
+	int quantum;
+	int qset;
+	unsigned long size;
+	unsigned int access_key;
+	struct semaphore sem;
+	struct cdev cdev;
+};
+
 /* Function prototypes */
 int scull_open(struct inode *inode, struct file *filp);
 int scull_release(struct inode *inode, struct file *filp);

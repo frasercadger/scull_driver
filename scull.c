@@ -33,9 +33,11 @@
  */
 
 /* Includes */
+#include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/init.h>
 #include <linux/module.h>
+#include <linux/slab.h>
 #include <linux/types.h>
 
 #include "scull.h"
@@ -61,8 +63,9 @@ static struct file_operations scull_fops = {
 
 static int __init scull_init(void)
 {
-	int retval;
+	int retval, devno;
 	dev_t dev;
+	struct scull_dev *my_scull_dev;
 
 	/* Get major and minor numbers via dynamic allocation */
 	retval = alloc_chrdev_region(&dev, scull_minor,
@@ -74,6 +77,27 @@ static int __init scull_init(void)
 	}
 
 	scull_major = MAJOR(dev);
+
+	/* Register char devices */
+	/* XXX: For initial testing register 1 device */
+
+	/* Allocate memory for devices */
+	my_scull_dev = kmalloc(sizeof(struct scull_dev), GFP_KERNEL);
+
+	/* Prepare cdev structure */
+	cdev_init(&my_scull_dev->cdev, &scull_fops);
+	my_scull_dev->cdev.owner = THIS_MODULE;
+	my_scull_dev->cdev.ops = &scull_fops;
+	devno = MKDEV(scull_major, scull_minor);
+
+	/* Register device */
+	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+
+	/* Check if registration was successful */
+	if(retval)
+	{
+		printk(KERN_ERR "Error: %d adding scull device\n", retval);
+	}
 
 	return 0;
 }
