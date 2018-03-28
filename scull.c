@@ -65,6 +65,7 @@ static int scull_quantum = DEFAULT_SCULL_QUANTUM;
 static int scull_qset = DEFAULT_SCULL_QSET;
 
 /* Function prototypes */
+int scull_trim(struct scull_dev *dev);
 static void scull_cleanup(void);
 static int scull_register_cdev(struct scull_dev *dev, int minor);
 static int __init scull_init(void);
@@ -116,7 +117,7 @@ int scull_open(struct inode *inode, struct file *filp)
 		{
 			return -ERESTARTSYS;
 		}
-		/* TODO: Need to implement scull_trim() function */
+		scull_trim(dev);
 		mutex_unlock(&dev->lock);
 	}
 
