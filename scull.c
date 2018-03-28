@@ -47,6 +47,8 @@
 static const char *scull_name = "scull";
 /* Currently we're only supporting scull0-scull3 */
 static const unsigned int scull_dev_count = 4;
+#define DEFAULT_SCULL_QUANTUM 4000
+#define DEFAULT_SCULL_QSET 1000
 
 /* Static globals */
 static int scull_major;
@@ -58,6 +60,8 @@ static struct file_operations scull_fops = {
 	.open =		scull_open,
 	.release =	scull_release,
 };
+static int scull_quantum = DEFAULT_SCULL_QUANTUM;
+static int scull_qset = DEFAULT_SCULL_QSET;
 
 /* Function prototypes */
 static void scull_cleanup(void);
@@ -180,10 +184,14 @@ static int __init scull_init(void)
 	/* Need to zero allocated memory */
 	memset(scull_devs, 0, sizeof(struct scull_dev));
 
-	/* Register all devices */
+	/* Initialize all devices */
 	for(i = 0; i < scull_dev_count; ++i)
 	{
-		/* XXX: Do we need to do any scull-specific initialisation? */
+		/* Initialize quantum and qset lengths */
+		scull_devs[i].quantum = scull_quantum;
+		scull_devs[i].qset = scull_qset;
+		/* TODO: Intialize mutex */
+		/* Register device */
 		retval = scull_register_cdev(&scull_devs[i], scull_minor + i);
 		/* Check if registration was successful */
 		if(retval)
