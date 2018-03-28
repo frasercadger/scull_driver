@@ -57,24 +57,11 @@ static struct file_operations scull_fops = {
 };
 
 /* Function prototypes */
+static void scull_cleanup(void);
 static int scull_register_cdev(struct scull_dev *dev, int minor);
+static int __init scull_init(void);
 
 /* Function definitions */
-
-static int scull_register_cdev(struct scull_dev *dev, int minor)
-{
-	int retval, devno;
-	/* Prepare cdev structure */
-	cdev_init(&dev->cdev, &scull_fops);
-	dev->cdev.owner = THIS_MODULE;
-	dev->cdev.ops = &scull_fops;
-
-	/* Register device */
-	devno = MKDEV(scull_major, minor);
-	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
-
-	return retval;
-}
 
 /* Cleanup function that doubles as module exit function */
 static void scull_cleanup(void)
@@ -95,6 +82,21 @@ static void scull_cleanup(void)
 
 	/* Unregister device number allocation */
 	unregister_chrdev_region(devno, scull_device_count);
+}
+
+static int scull_register_cdev(struct scull_dev *dev, int minor)
+{
+	int retval, devno;
+	/* Prepare cdev structure */
+	cdev_init(&dev->cdev, &scull_fops);
+	dev->cdev.owner = THIS_MODULE;
+	dev->cdev.ops = &scull_fops;
+
+	/* Register device */
+	devno = MKDEV(scull_major, minor);
+	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+
+	return retval;
 }
 
 static int __init scull_init(void)
