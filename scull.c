@@ -107,7 +107,16 @@ static void __exit scull_exit(void)
 {
 	dev_t devno = MKDEV(scull_major, scull_minor);
 
+	if(my_scull_dev)
+	{
+		/* Free any memory allocated to scull devices */
+		kfree(my_scull_dev);
+		/* Unregister char devices */
+		cdev_del(&my_scull_dev->cdev);
+	}
+
 	/* Unregister device number allocation */
 	unregister_chrdev_region(devno, scull_device_count);
+
 }
 module_exit(scull_exit);
