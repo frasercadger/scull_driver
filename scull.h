@@ -48,6 +48,7 @@ struct scull_qset {
 	struct scull_qset *next;
 };
 struct scull_dev {
+	struct scull_qset *data;
 	int quantum;
 	int qset;
 	unsigned long size;
