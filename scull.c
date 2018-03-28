@@ -65,6 +65,10 @@ static void scull_cleanup(void)
 {
 	dev_t devno = MKDEV(scull_major, scull_minor);
 
+#if SCULL_DEBUG
+	printk(KERN_INFO "Scull cleanup/exit\n");
+#endif
+
 	if(my_scull_dev)
 	{
 		/* Free any memory allocated to scull devices */
@@ -75,13 +79,16 @@ static void scull_cleanup(void)
 
 	/* Unregister device number allocation */
 	unregister_chrdev_region(devno, scull_device_count);
-
 }
 
 static int __init scull_init(void)
 {
 	int retval, devno;
 	dev_t dev;
+
+#if SCULL_DEBUG
+	printk(KERN_INFO "Intialising scull device\n");
+#endif
 
 	/* Get major and minor numbers via dynamic allocation */
 	retval = alloc_chrdev_region(&dev, scull_minor,
@@ -95,6 +102,10 @@ static int __init scull_init(void)
 
 	scull_major = MAJOR(dev);
 
+#if SCULL_DEBUG
+	printk(KERN_INFO "Allocated major number: %d\n", scull_major);
+#endif
+
 	/* Register char devices */
 	/* XXX: For initial testing register 1 device */
 
@@ -107,6 +118,11 @@ static int __init scull_init(void)
 		retval = -ENOMEM;
 		goto fail;
 	}
+
+#if SCULL_DEBUG
+	printk(KERN_INFO "Device memory allocation successful\n");
+#endif
+
 	/* Need to zero allocated memory */
 	memset(my_scull_dev, 0, sizeof(struct scull_dev));
 
@@ -125,6 +141,10 @@ static int __init scull_init(void)
 		printk(KERN_ERR "Error: %d adding scull device\n", retval);
 		goto fail;
 	}
+
+#if SCULL_DEBUG
+	printk(KERN_INFO "cdev registration successful\n");
+#endif
 
 	/* Error handling */
 fail:

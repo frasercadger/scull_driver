@@ -38,6 +38,9 @@
 /* Includes */
 #include <linux/fs.h>
 
+/* Public defines */
+#define SCULL_DEBUG 1 /* Enable debug for early development */
+
 /* Public datatypes */
 struct scull_qset {
 	void **data;
