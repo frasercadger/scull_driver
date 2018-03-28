@@ -62,48 +62,8 @@ static struct file_operations scull_fops = {
 
 /* Function definitions */
 
-static int __init scull_init(void)
-{
-	int retval, devno;
-	dev_t dev;
-
-	/* Get major and minor numbers via dynamic allocation */
-	retval = alloc_chrdev_region(&dev, scull_minor,
-				     scull_device_count, scull_name);
-	if(retval < 0)
-	{
-		/* Something went wrong */
-		printk(KERN_ERR "Dynamic allocation of major number error\n");
-	}
-
-	scull_major = MAJOR(dev);
-
-	/* Register char devices */
-	/* XXX: For initial testing register 1 device */
-
-	/* Allocate memory for devices */
-	my_scull_dev = kmalloc(sizeof(struct scull_dev), GFP_KERNEL);
-
-	/* Prepare cdev structure */
-	cdev_init(&my_scull_dev->cdev, &scull_fops);
-	my_scull_dev->cdev.owner = THIS_MODULE;
-	my_scull_dev->cdev.ops = &scull_fops;
-	devno = MKDEV(scull_major, scull_minor);
-
-	/* Register device */
-	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
-
-	/* Check if registration was successful */
-	if(retval)
-	{
-		printk(KERN_ERR "Error: %d adding scull device\n", retval);
-	}
-
-	return 0;
-}
-module_init(scull_init);
-
-static void __exit scull_exit(void)
+/* Cleanup function that doubles as module exit function */
+static void scull_cleanup(void)
 {
 	dev_t devno = MKDEV(scull_major, scull_minor);
 
@@ -119,4 +79,62 @@ static void __exit scull_exit(void)
 	unregister_chrdev_region(devno, scull_device_count);
 
 }
-module_exit(scull_exit);
+
+static int __init scull_init(void)
+{
+	int retval, devno;
+	dev_t dev;
+
+	/* Get major and minor numbers via dynamic allocation */
+	retval = alloc_chrdev_region(&dev, scull_minor,
+				     scull_device_count, scull_name);
+	if(retval < 0)
+	{
+		/* Something went wrong */
+		printk(KERN_ERR "Dynamic allocation of major number error\n");
+		return retval;
+	}
+
+	scull_major = MAJOR(dev);
+
+	/* Register char devices */
+	/* XXX: For initial testing register 1 device */
+
+	/* Allocate memory for devices */
+	my_scull_dev = kmalloc(sizeof(struct scull_dev), GFP_KERNEL);
+	if(!my_scull_dev)
+	{
+		/* Memory allocation failed */
+		printk(KERN_ERR "Error allocating memory for scull device\n");
+		retval = -ENOMEM;
+		goto fail;
+	}
+	/* Need to zero allocated memory */
+	memset(my_scull_dev, 0, sizeof(struct scull_dev));
+
+	/* Prepare cdev structure */
+	cdev_init(&my_scull_dev->cdev, &scull_fops);
+	my_scull_dev->cdev.owner = THIS_MODULE;
+	my_scull_dev->cdev.ops = &scull_fops;
+	devno = MKDEV(scull_major, scull_minor);
+
+	/* Register device */
+	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+
+	/* Check if registration was successful */
+	if(retval)
+	{
+		printk(KERN_ERR "Error: %d adding scull device\n", retval);
+		goto fail;
+	}
+
+	/* Error handling */
+fail:
+	/* Cleanup */
+	scull_cleanup();
+	return retval;
+
+	return 0;
+}
+module_init(scull_init);
+module_exit(scull_cleanup);
