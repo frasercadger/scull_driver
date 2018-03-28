@@ -45,12 +45,12 @@
 /* Local constants */
 static const char *scull_name = "scull";
 /* Currently we're only supporting scull0-scull3 */
-static const unsigned int scull_device_count = 4;
+static const unsigned int scull_dev_count = 4;
 
 /* Static globals */
 static int scull_major;
 static int scull_minor = 0;
-static struct scull_dev *my_scull_dev;
+static struct scull_dev *scull_devs;
 /* XXX: Add function pointers as we go */
 static struct file_operations scull_fops = {
 	.owner =	THIS_MODULE,
@@ -66,22 +66,27 @@ static int __init scull_init(void);
 /* Cleanup function that doubles as module exit function */
 static void scull_cleanup(void)
 {
+	int i;
 	dev_t devno = MKDEV(scull_major, scull_minor);
 
 #if SCULL_DEBUG
 	printk(KERN_INFO "Scull cleanup/exit\n");
 #endif
 
-	if(my_scull_dev)
+	if(scull_devs)
 	{
+		for(i = 0; i < scull_dev_count; ++i)
+		{
+			/* Unregister char devices */
+			cdev_del(&scull_devs[i].cdev);
+		}
+
 		/* Free any memory allocated to scull devices */
-		kfree(my_scull_dev);
-		/* Unregister char devices */
-		cdev_del(&my_scull_dev->cdev);
+		kfree(scull_devs);
 	}
 
 	/* Unregister device number allocation */
-	unregister_chrdev_region(devno, scull_device_count);
+	unregister_chrdev_region(devno, scull_dev_count);
 }
 
 static int scull_register_cdev(struct scull_dev *dev, int minor)
@@ -94,14 +99,14 @@ static int scull_register_cdev(struct scull_dev *dev, int minor)
 
 	/* Register device */
 	devno = MKDEV(scull_major, minor);
-	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+	retval = cdev_add(&dev->cdev, devno, 1);
 
 	return retval;
 }
 
 static int __init scull_init(void)
 {
-	int retval;
+	int retval, i;
 	dev_t dev;
 
 #if SCULL_DEBUG
@@ -110,7 +115,7 @@ static int __init scull_init(void)
 
 	/* Get major and minor numbers via dynamic allocation */
 	retval = alloc_chrdev_region(&dev, scull_minor,
-				     scull_device_count, scull_name);
+				     scull_dev_count, scull_name);
 	if(retval < 0)
 	{
 		/* Something went wrong */
@@ -125,11 +130,11 @@ static int __init scull_init(void)
 #endif
 
 	/* Register char devices */
-	/* XXX: For initial testing register 1 device */
 
 	/* Allocate memory for devices */
-	my_scull_dev = kmalloc(sizeof(struct scull_dev), GFP_KERNEL);
-	if(!my_scull_dev)
+	scull_devs = kmalloc(scull_dev_count * sizeof(struct scull_dev),
+			     GFP_KERNEL);
+	if(!scull_devs)
 	{
 		/* Memory allocation failed */
 		printk(KERN_ERR "Error allocating memory for scull device\n");
@@ -142,17 +147,21 @@ static int __init scull_init(void)
 #endif
 
 	/* Need to zero allocated memory */
-	memset(my_scull_dev, 0, sizeof(struct scull_dev));
+	memset(scull_devs, 0, sizeof(struct scull_dev));
 
-	/* Register device */
-	retval = scull_register_cdev(my_scull_dev, scull_minor);
-
-	/* Check if registration was successful */
-	if(retval)
+	/* Register all devices */
+	for(i = 0; i < scull_dev_count; ++i)
 	{
-		printk(KERN_ERR "Error: %d adding scull device\n", retval);
-		goto fail;
+		retval = scull_register_cdev(&scull_devs[i], scull_minor + i);
+		/* Check if registration was successful */
+		if(retval)
+		{
+			printk(KERN_ERR "Error: %d adding scull device\n",
+			       retval);
+			goto fail;
+		}
 	}
+
 
 #if SCULL_DEBUG
 	printk(KERN_INFO "cdev registration successful\n");
