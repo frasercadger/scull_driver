@@ -85,7 +85,12 @@ int scull_open(struct inode *inode, struct file *filp)
 	/* Trim file length to 0 if open was write only */
 	if((filp->f_flags & O_ACCMODE) == O_WRONLY)
 	{
+		if(mutex_lock_interruptible(&dev->lock))
+		{
+			return -ERESTARTSYS;
+		}
 		/* TODO: Need to implement scull_trim() function */
+		mutex_unlock(&dev->lock);
 	}
 
 	return 0;
