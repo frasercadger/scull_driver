@@ -55,6 +55,8 @@ static struct scull_dev *scull_devs;
 /* XXX: Add function pointers as we go */
 static struct file_operations scull_fops = {
 	.owner =	THIS_MODULE,
+	.open =		scull_open,
+	.release =	scull_release,
 };
 
 /* Function prototypes */
