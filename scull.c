@@ -50,6 +50,7 @@ static const unsigned int scull_device_count = 4;
 /* Static globals */
 static int scull_major;
 static int scull_minor = 0;
+static struct scull_dev *my_scull_dev;
 /* XXX: Add function pointers as we go */
 static struct file_operations scull_fops = {
 	.owner =	THIS_MODULE,
@@ -65,7 +66,6 @@ static int __init scull_init(void)
 {
 	int retval, devno;
 	dev_t dev;
-	struct scull_dev *my_scull_dev;
 
 	/* Get major and minor numbers via dynamic allocation */
 	retval = alloc_chrdev_region(&dev, scull_minor,
