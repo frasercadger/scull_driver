@@ -146,13 +146,13 @@ static int __init scull_init(void)
 	printk(KERN_INFO "cdev registration successful\n");
 #endif
 
+	return 0;
+
 	/* Error handling */
 fail:
 	/* Cleanup */
 	scull_cleanup();
 	return retval;
-
-	return 0;
 }
 module_init(scull_init);
 module_exit(scull_cleanup);
