@@ -57,8 +57,24 @@ static struct file_operations scull_fops = {
 };
 
 /* Function prototypes */
+static int scull_register_cdev(struct scull_dev *dev, int minor);
 
 /* Function definitions */
+
+static int scull_register_cdev(struct scull_dev *dev, int minor)
+{
+	int retval, devno;
+	/* Prepare cdev structure */
+	cdev_init(&dev->cdev, &scull_fops);
+	dev->cdev.owner = THIS_MODULE;
+	dev->cdev.ops = &scull_fops;
+
+	/* Register device */
+	devno = MKDEV(scull_major, minor);
+	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+
+	return retval;
+}
 
 /* Cleanup function that doubles as module exit function */
 static void scull_cleanup(void)
@@ -83,7 +99,7 @@ static void scull_cleanup(void)
 
 static int __init scull_init(void)
 {
-	int retval, devno;
+	int retval;
 	dev_t dev;
 
 #if SCULL_DEBUG
@@ -126,14 +142,8 @@ static int __init scull_init(void)
 	/* Need to zero allocated memory */
 	memset(my_scull_dev, 0, sizeof(struct scull_dev));
 
-	/* Prepare cdev structure */
-	cdev_init(&my_scull_dev->cdev, &scull_fops);
-	my_scull_dev->cdev.owner = THIS_MODULE;
-	my_scull_dev->cdev.ops = &scull_fops;
-	devno = MKDEV(scull_major, scull_minor);
-
 	/* Register device */
-	retval = cdev_add(&my_scull_dev->cdev, devno, 1);
+	retval = scull_register_cdev(my_scull_dev, scull_minor);
 
 	/* Check if registration was successful */
 	if(retval)
