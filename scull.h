@@ -32,58 +32,14 @@
  *
  */
 
+#ifndef SCULL_H
+#define SCULL_H
+
 /* Includes */
 #include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-
-#include "scull.h"
-
-/* Local constants */
-static const char *scull_name = "scull";
-/* Currently we're only supporting scull0-scull3 */
-static const unsigned int scull_device_count = 4;
-
-/* Static globals */
-static int scull_major;
-static int scull_minor = 0;
-/* XXX: Add function pointers as we go */
-static struct file_operations scull_fops = {
-	.owner =	THIS_MODULE,
-	.open =		scull_open,
-	.release =	scull_release,
-};
 
 /* Function prototypes */
+int scull_open(struct inode *inode, struct file *filp);
+int scull_release(struct inode *inode, struct file *filp);
 
-/* Function definitions */
-
-static int __init scull_init(void)
-{
-	int retval;
-	dev_t dev;
-
-	/* Get major and minor numbers via dynamic allocation */
-	retval = alloc_chrdev_region(&dev, scull_minor,
-				     scull_device_count, scull_name);
-	if(retval < 0)
-	{
-		/* Something went wrong */
-		printk(KERN_ERR "Dynamic allocation of major number error\n");
-	}
-
-	scull_major = MAJOR(dev);
-
-	return 0;
-}
-module_init(scull_init);
-
-static void __exit scull_exit(void)
-{
-	dev_t devno = MKDEV(scull_major, scull_minor);
-
-	/* Unregister device number allocation */
-	unregister_chrdev_region(devno, scull_device_count);
-}
-module_exit(scull_exit);
+#endif
