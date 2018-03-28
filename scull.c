@@ -38,6 +38,7 @@
 #include <linux/init.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/types.h>
 
@@ -190,7 +191,8 @@ static int __init scull_init(void)
 		/* Initialize quantum and qset lengths */
 		scull_devs[i].quantum = scull_quantum;
 		scull_devs[i].qset = scull_qset;
-		/* TODO: Intialize mutex */
+		/* Intialize mutex lock */
+		mutex_init(&scull_devs[i].lock);
 		/* Register device */
 		retval = scull_register_cdev(&scull_devs[i], scull_minor + i);
 		/* Check if registration was successful */

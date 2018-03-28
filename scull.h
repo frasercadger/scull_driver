@@ -37,6 +37,7 @@
 
 /* Includes */
 #include <linux/fs.h>
+#include <linux/mutex.h>
 
 /* Public defines */
 #define SCULL_DEBUG 1 /* Enable debug for early development */
@@ -51,7 +52,7 @@ struct scull_dev {
 	int qset;
 	unsigned long size;
 	unsigned int access_key;
-	struct semaphore sem;
+	struct mutex lock;
 	struct cdev cdev;
 };
 
