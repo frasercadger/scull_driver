@@ -36,6 +36,7 @@
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/init.h>
+#include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/types.h>
@@ -62,6 +63,34 @@ static int scull_register_cdev(struct scull_dev *dev, int minor);
 static int __init scull_init(void);
 
 /* Function definitions */
+
+int scull_open(struct inode *inode, struct file *filp)
+{
+	struct scull_dev *dev;
+
+	/* Find out which device we're dealing with */
+	dev = container_of(inode->i_cdev, struct scull_dev, cdev);
+	/* Add scull_dev pointer to struct file so other functions can identify
+	 * dev.
+	 * */
+	filp->private_data = dev;
+
+	/* Trim file length to 0 if open was write only */
+	if((filp->f_flags & O_ACCMODE) == O_WRONLY)
+	{
+		/* TODO: Need to implement scull_trim() function */
+	}
+
+	return 0;
+}
+
+int scull_release(struct inode *inode, struct file *filp)
+{
+	/* XXX: LDD Chapter 3 has this function empty, so I'll stick with that for
+	 * now.
+	 */
+	return 0;
+}
 
 /* Cleanup function that doubles as module exit function */
 static void scull_cleanup(void)
@@ -152,6 +181,7 @@ static int __init scull_init(void)
 	/* Register all devices */
 	for(i = 0; i < scull_dev_count; ++i)
 	{
+		/* XXX: Do we need to do any scull-specific initialisation? */
 		retval = scull_register_cdev(&scull_devs[i], scull_minor + i);
 		/* Check if registration was successful */
 		if(retval)
