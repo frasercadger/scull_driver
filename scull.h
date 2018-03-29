@@ -60,5 +60,7 @@ struct scull_dev {
 /* Function prototypes */
 int scull_open(struct inode *inode, struct file *filp);
 int scull_release(struct inode *inode, struct file *filp);
+ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
+		   loff_t *f_post);
 
 #endif

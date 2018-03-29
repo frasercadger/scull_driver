@@ -33,6 +33,8 @@
  */
 
 /* Includes */
+#include <asm/uaccess.h>
+
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/init.h>
@@ -130,6 +132,70 @@ int scull_release(struct inode *inode, struct file *filp)
 	 * now.
 	 */
 	return 0;
+}
+
+ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
+		   loff_t *f_pos)
+{
+	struct scull_dev *dev = filp->private_data;
+	struct scull_qset *pqset;
+	int quantum = dev->quantum;
+	int qset = dev->qset;
+	int item_size = quantum * qset;
+	int list_item, s_pos, q_pos, rest;
+	ssize_t retval = 0;
+
+	/* Acquire device lock */
+	if(mutex_lock_interruptible(&dev->lock))
+	{
+		return -ERESTARTSYS;
+	}
+	/* Check for EOF */
+	if(*f_pos >= dev->size)
+	{
+		goto out;
+	}
+	/* If count exceeds file size, set count to remaining bytes */
+	if(*f_pos + count > dev->size)
+	{
+		count = dev->size - *f_pos;
+	}
+
+	/* Find listitem, qset index, and offset in the quantum */
+	list_item = (long) *f_pos / item_size;
+	rest = (long) *f_pos % item_size;
+	s_pos = rest / quantum;
+	q_pos = rest % quantum;
+
+	/* Follow the list until we reach the right position */
+	/* TODO: implement scull_follow() */
+
+	/* Make sure there is data at the position */
+	if(pqset == NULL || !pqset->data || ! pqset->data[s_pos])
+	{
+		goto out;
+	}
+
+	/* Read to the end of the quantum
+	 * I.e. only transfer a single quantum.
+	 * */
+	if(count > quantum - q_pos)
+	{
+		count = quantum - q_pos;
+	}
+
+	/* Transfer the bytes to userspace */
+	if(copy_to_user(buf, pqset->data[s_pos] + q_pos, count))
+	{
+		retval = -EFAULT;
+		goto out;
+	}
+	*f_pos += count;
+	retval = count;
+
+out:
+	mutex_unlock(&dev->lock);
+	return retval;
 }
 
 /* Cleanup function that doubles as module exit function */
