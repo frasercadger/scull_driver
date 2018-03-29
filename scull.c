@@ -223,6 +223,7 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	*f_pos += count;
 	retval = count;
 
+	/* Common exit; release device lock and return result */
 out:
 	mutex_unlock(&dev->lock);
 	return retval;
