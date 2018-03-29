@@ -62,6 +62,7 @@ static struct file_operations scull_fops = {
 	.owner =	THIS_MODULE,
 	.open =		scull_open,
 	.release =	scull_release,
+	.read =		scull_read,
 };
 static int scull_quantum = DEFAULT_SCULL_QUANTUM;
 static int scull_qset = DEFAULT_SCULL_QSET;
