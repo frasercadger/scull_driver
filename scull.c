@@ -178,11 +178,17 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	/* Acquire device lock */
 	if(mutex_lock_interruptible(&dev->lock))
 	{
+#if SCULL_DEBUG
+		printk(KERN_INFO "Error reading: can't acquire device lock\n");
+#endif
 		return -ERESTARTSYS;
 	}
 	/* Check for EOF */
 	if(*f_pos >= dev->size)
 	{
+#if SCULL_DEBUG
+		printk(KERN_INFO "Error reading: EOF reached\n");
+#endif
 		goto out;
 	}
 	/* If count exceeds file size, set count to remaining bytes */
@@ -203,6 +209,10 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	/* Make sure there is data at the position */
 	if(pqset == NULL || !pqset->data || ! pqset->data[s_pos])
 	{
+#if SCULL_DEBUG
+		printk(KERN_INFO "Error reading: no data at requested \
+		       permission\n");
+#endif
 		goto out;
 	}
 
@@ -217,9 +227,15 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	/* Transfer the bytes to userspace */
 	if(copy_to_user(buf, pqset->data[s_pos] + q_pos, count))
 	{
+#if SCULL_DEBUG
+		printk(KERN_INFO "Error reading: copy to userspace failed\n");
+#endif
 		retval = -EFAULT;
 		goto out;
 	}
+#if SCULL_DEBUG
+	printk(KERN_INFO "Read successful\n");
+#endif
 	*f_pos += count;
 	retval = count;
 
