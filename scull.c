@@ -47,9 +47,9 @@
 #include "scull.h"
 
 /* Local constants */
-static const char *scull_name = "scull";
+#define SCULL_NAME "scull"
 /* Currently we're only supporting scull0-scull3 */
-static const unsigned int scull_dev_count = 4;
+#define SCULL_DEV_COUNT 4
 #define DEFAULT_SCULL_QUANTUM 4000
 #define DEFAULT_SCULL_QSET 1000
 
@@ -258,7 +258,7 @@ static void scull_cleanup(void)
 
 	if(scull_devs)
 	{
-		for(i = 0; i < scull_dev_count; ++i)
+		for(i = 0; i < SCULL_DEV_COUNT; ++i)
 		{
 			/* Unregister char devices */
 			cdev_del(&scull_devs[i].cdev);
@@ -269,7 +269,7 @@ static void scull_cleanup(void)
 	}
 
 	/* Unregister device number allocation */
-	unregister_chrdev_region(devno, scull_dev_count);
+	unregister_chrdev_region(devno, SCULL_DEV_COUNT);
 }
 
 static int scull_register_cdev(struct scull_dev *dev, int minor)
@@ -298,7 +298,7 @@ static int __init scull_init(void)
 
 	/* Get major and minor numbers via dynamic allocation */
 	retval = alloc_chrdev_region(&dev, scull_minor,
-				     scull_dev_count, scull_name);
+				     SCULL_DEV_COUNT, SCULL_NAME);
 	if(retval < 0)
 	{
 		/* Something went wrong */
@@ -315,7 +315,7 @@ static int __init scull_init(void)
 	/* Register char devices */
 
 	/* Allocate memory for devices */
-	scull_devs = kmalloc(scull_dev_count * sizeof(struct scull_dev),
+	scull_devs = kmalloc(SCULL_DEV_COUNT * sizeof(struct scull_dev),
 			     GFP_KERNEL);
 	if(!scull_devs)
 	{
@@ -333,7 +333,7 @@ static int __init scull_init(void)
 	memset(scull_devs, 0, sizeof(struct scull_dev));
 
 	/* Initialize all devices */
-	for(i = 0; i < scull_dev_count; ++i)
+	for(i = 0; i < SCULL_DEV_COUNT; ++i)
 	{
 		/* Initialize quantum and qset lengths */
 		scull_devs[i].quantum = scull_quantum;
