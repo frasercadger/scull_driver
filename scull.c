@@ -68,6 +68,7 @@ static int scull_qset = DEFAULT_SCULL_QSET;
 
 /* Function prototypes */
 int scull_trim(struct scull_dev *dev);
+struct scull_qset *scull_follow(struct scull_dev *dev, int n);
 static void scull_cleanup(void);
 static int scull_register_cdev(struct scull_dev *dev, int minor);
 static int __init scull_init(void);
@@ -134,6 +135,35 @@ int scull_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 
+/*
+ * Follow the list
+ */
+struct scull_qset *scull_follow(struct scull_dev *dev, int n)
+{
+	struct scull_qset *qs = dev->data;
+
+        /* Allocate first qset explicitly if need be */
+	if (! qs) {
+		qs = dev->data = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
+		if (qs == NULL)
+			return NULL;  /* Never mind */
+		memset(qs, 0, sizeof(struct scull_qset));
+	}
+
+	/* Then follow the list */
+	while (n--) {
+		if (!qs->next) {
+			qs->next = kmalloc(sizeof(struct scull_qset), GFP_KERNEL);
+			if (qs->next == NULL)
+				return NULL;  /* Never mind */
+			memset(qs->next, 0, sizeof(struct scull_qset));
+		}
+		qs = qs->next;
+		continue;
+	}
+	return qs;
+}
+
 ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 		   loff_t *f_pos)
 {
@@ -168,7 +198,7 @@ ssize_t scull_read(struct file *filp, char __user *buf, size_t count,
 	q_pos = rest % quantum;
 
 	/* Follow the list until we reach the right position */
-	/* TODO: implement scull_follow() */
+	pqset = scull_follow(dev, list_item);
 
 	/* Make sure there is data at the position */
 	if(pqset == NULL || !pqset->data || ! pqset->data[s_pos])
