@@ -63,6 +63,7 @@ static struct file_operations scull_fops = {
 	.open =		scull_open,
 	.release =	scull_release,
 	.read =		scull_read,
+	.write =	scull_write,
 };
 static int scull_quantum = DEFAULT_SCULL_QUANTUM;
 static int scull_qset = DEFAULT_SCULL_QSET;
@@ -247,7 +248,7 @@ out:
 }
 
 
-ssize_t scull_write(struct file *filp, char __user *buf, size_t count,
+ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
 		   loff_t *f_pos)
 {
 	struct scull_dev *dev = filp->private_data;
