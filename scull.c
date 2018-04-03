@@ -246,6 +246,90 @@ out:
 	return retval;
 }
 
+
+ssize_t scull_write(struct file *filp, char __user *buf, size_t count,
+		   loff_t *f_pos)
+{
+	struct scull_dev *dev = filp->private_data;
+	struct scull_qset *pqset;
+	int quantum = dev->quantum;
+	int qset = dev->qset;
+	int item_size = quantum * qset;
+	int list_item, s_pos, q_pos, rest;
+	ssize_t retval = -ENOMEM;
+
+	/* Lock device */
+	if(mutex_lock_interruptible(&dev->lock))
+	{
+		return -ERESTARTSYS;
+	}
+
+	/* Find listitem, qset offset, and index in quantum */
+	list_item = (long) *f_pos / item_size;
+	rest = (long) *f_pos % item_size;
+	s_pos = rest / quantum;
+	q_pos = rest % quantum;
+
+	/* Follow the list to the right qset */
+	pqset = scull_follow(dev, list_item);
+	if(pqset == NULL)
+	{
+		goto out;
+	}
+
+	/* The qset's quantum array may be uninitialised if it hasn't been written to before */
+	if(!pqset->data)
+	{
+		/* If unintialised, allocate and zero memory for quantum array*/
+		pqset->data = kmalloc(qset * sizeof(char *), GFP_KERNEL);
+		if(!pqset->data)
+		{
+			printk(KERN_INFO "Error allocating qset array memory \
+			       \n");
+			goto out;
+		}
+		memset(pqset->data, 0, qset * sizeof(char *));
+	}
+	/* Likewise, the quantum we are writing to may be unintialised */
+	if(!pqset->data[s_pos])
+	{
+		pqset->data[s_pos] = kmalloc(quantum, GFP_KERNEL);
+		if(!pqset->data[s_pos])
+		{
+			printk(KERN_INFO "Error allocating quantum memory\n");
+			goto out;
+		}
+		/* XXX: We don't zero the kmalloc'd memory. Is this safe? */
+	}
+
+	/* We're only writing to the end of a single quantum so adjust count if necessary */
+	if(count > quantum - q_pos)
+	{
+		count = quantum - q_pos;
+	}
+
+	/* Read data from userspace buffer into the quantum at position q_pos */
+	if(copy_from_user(pqset->data[s_pos]+q_pos, buf, count))
+	{
+		printk(KERN_INFO "Error: copy from userspace failed\n");
+		retval = -EFAULT;
+		goto out;
+	}
+	*f_pos += count;
+	retval = count;
+
+	/* Adjust file size as we've written to it */
+	if(dev->size < *f_pos)
+	{
+		dev->size = *f_pos;
+	}
+
+/* Common exit */
+out:
+	mutex_unlock(&dev->lock);
+	return retval;
+}
+
 /* Cleanup function that doubles as module exit function */
 static void scull_cleanup(void)
 {
