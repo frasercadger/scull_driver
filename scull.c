@@ -69,8 +69,9 @@ static int scull_quantum = DEFAULT_SCULL_QUANTUM;
 static int scull_qset = DEFAULT_SCULL_QSET;
 
 /* Function prototypes */
-int scull_trim(struct scull_dev *dev);
-struct scull_qset *scull_follow(struct scull_dev *dev, int n);
+/* XXX: Assume all calls to static functions already hold device lock */
+static int scull_trim(struct scull_dev *dev);
+static struct scull_qset *scull_follow(struct scull_dev *dev, int n);
 static void scull_cleanup(void);
 static int scull_register_cdev(struct scull_dev *dev, int minor);
 static int __init scull_init(void);
@@ -81,7 +82,7 @@ static int __init scull_init(void);
  * Empty out the scull device; must be called with the device
  * semaphore held.
  */
-int scull_trim(struct scull_dev *dev)
+static int scull_trim(struct scull_dev *dev)
 {
 	struct scull_qset *next, *dptr;
 	int qset = dev->qset;   /* "dev" is not-null */
@@ -140,7 +141,7 @@ int scull_release(struct inode *inode, struct file *filp)
 /*
  * Follow the list
  */
-struct scull_qset *scull_follow(struct scull_dev *dev, int n)
+static struct scull_qset *scull_follow(struct scull_dev *dev, int n)
 {
 	struct scull_qset *qs = dev->data;
 
